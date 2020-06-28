@@ -30,25 +30,30 @@ public class PersistentCookieJar implements ClearableCookieJar {
 
     private CookieCache cache;
     private CookiePersistor persistor;
+    private boolean persistAllCookies;
 
     public PersistentCookieJar(CookieCache cache, CookiePersistor persistor) {
+        this(cache, persistor, false);
+    }
+
+    public PersistentCookieJar(CookieCache cache, CookiePersistor persistor, boolean persistAllCookies) {
         this.cache = cache;
         this.persistor = persistor;
-
+        this.persistAllCookies = persistAllCookies;
         this.cache.addAll(persistor.loadAll());
     }
 
     @Override
     synchronized public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
         cache.addAll(cookies);
-        persistor.saveAll(filterPersistentCookies(cookies));
+        persistor.saveAll(filterPersistentCookies(cookies, persistAllCookies));
     }
 
-    private static List<Cookie> filterPersistentCookies(List<Cookie> cookies) {
+    private static List<Cookie> filterPersistentCookies(List<Cookie> cookies, boolean persistAllCookies) {
         List<Cookie> persistentCookies = new ArrayList<>();
 
         for (Cookie cookie : cookies) {
-            if (cookie.persistent()) {
+            if (cookie.persistent() || persistAllCookies) {
                 persistentCookies.add(cookie);
             }
         }
